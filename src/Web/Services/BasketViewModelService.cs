@@ -52,8 +52,10 @@ namespace Microsoft.eShopWeb.Web.Services
         private async Task<BasketViewModel> CreateBasketForUser(string userId)
         {
             var basket = new Basket(userId);
-            await _basketRepository.AddAsync(basket);
-
+            // side effect 
+            // await _basketRepository.AddAsync(basket);
+            basket = await _basketRepository.AddAsync(basket);
+            
             return new BasketViewModel()
             {
                 BuyerId = basket.BuyerId,
@@ -64,6 +66,8 @@ namespace Microsoft.eShopWeb.Web.Services
         private async Task<List<BasketItemViewModel>> GetBasketItems(IReadOnlyCollection<BasketItem> basketItems)
         {
             var catalogItemsSpecification = new CatalogItemsSpecification(basketItems.Select(b => b.CatalogItemId).ToArray());
+            // skip if empty?
+            // move logic to into separate service / builder
             var catalogItems = await _itemRepository.ListAsync(catalogItemsSpecification);
 
             var items = basketItems.Select(basketItem =>
@@ -79,7 +83,9 @@ namespace Microsoft.eShopWeb.Web.Services
                     PictureUrl = _uriComposer.ComposePicUri(catalogItem.PictureUri),
                     ProductName = catalogItem.Name
                 };
+                
                 return basketItemViewModel;
+                
             }).ToList();
 
             return items;
